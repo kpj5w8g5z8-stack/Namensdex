@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Strikte CSP: keinerlei externe Verbindungen möglich. Bilder nur aus lokalen Blobs/Data-URLs. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src blob: data:;">
+<meta name="theme-color" content="#101318">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GesichterDex">
+<link rel="icon" href="data:,">
+<title>GesichterDex – lokaler Personen-Pokédex</title>
+<style>
+/* ================= Grundgerüst & Farbwelt ================= */
+:root{
+  --rot:#e3350d;          /* Pokédex-Rot */
+  --rot-dunkel:#a3230a;
+  --blau:#38bdf8;         /* Linse / Fokus */
+  --gelb:#facc15;
+  --gruen:#4ade80;
+  --bg:#101318;
+  --flaeche:#1a1f27;      /* Karten */
+  --flaeche2:#232a35;     /* Eingaben, Foto-Hintergrund */
+  --rand:#303947;
+  --text:#e9edf3;
+  --leise:#9aa5b5;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  line-height:1.5;min-height:100vh;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+img{display:block;max-width:100%}
+[hidden]{display:none !important}
+:focus-visible{outline:2px solid var(--blau);outline-offset:2px}
+
+/* ================= Kopfleiste (Pokédex-Deckel) ================= */
+.kopf{
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(180deg,var(--rot) 0%,#c22a09 100%);
+  border-bottom:4px solid var(--rot-dunkel);
+  box-shadow:0 2px 10px rgba(0,0,0,.45);
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
+}
+.kopf-innen{display:flex;align-items:center;gap:12px;max-width:680px;margin:0 auto}
+.linse{
+  width:38px;height:38px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 30%,#bae6fd 0%,#38bdf8 35%,#1d4ed8 72%,#172554 100%);
+  border:3px solid #f1f5f9;box-shadow:inset -3px -4px 6px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.4);
+}
+.leds{display:flex;gap:6px;align-self:flex-start;margin-top:2px}
+.led{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.35)}
+.led.r{background:#ef4444}.led.g{background:var(--gelb)}
+.led.b{background:var(--gruen);animation:blinken 2.6s infinite}
+@keyframes blinken{0%,62%{opacity:1}72%{opacity:.3}82%{opacity:1}}
+.kopf h1{flex:1;font-size:1.15rem;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;font-size:1.25rem;flex:none;
+  background:rgba(0,0,0,.22);border:1px solid rgba(0,0,0,.3);
+}
+.icon-btn:active{transform:scale(.94)}
+
+/* ================= Layout ================= */
+main{max-width:680px;margin:0 auto;padding:14px 14px calc(96px + env(safe-area-inset-bottom))}
+.zurueck{color:var(--leise);font-size:.95rem;padding:6px 4px;margin-bottom:8px}
+.zurueck:active{color:var(--text)}
+.hinweis{color:var(--leise);font-size:.85rem}
+.hinweis.klein{font-size:.75rem;margin-top:14px}
+
+/* ================= Liste / Raster ================= */
+.werkzeuge{display:flex;gap:8px}
+.werkzeuge input[type=search]{flex:1;min-width:0}
+.werkzeuge select{width:auto;flex:none}
+.zaehler{font-family:var(--mono);font-size:.78rem;color:var(--leise);margin:10px 2px}
+.raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.karte{
+  display:flex;flex-direction:column;text-align:left;position:relative;
+  background:var(--flaeche);border:1px solid var(--rand);border-radius:14px;overflow:hidden;
+  transition:transform .1s;
+}
+.karte:active{transform:scale(.96)}
+.karte .foto{aspect-ratio:1/1;background:var(--flaeche2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.karte .foto img{width:100%;height:100%;object-fit:cover}
+.karte .nr{
+  position:absolute;top:6px;left:6px;z-index:1;
+  font-family:var(--mono);font-size:.68rem;color:#fff;
+  background:rgba(0,0,0,.55);padding:2px 6px;border-radius:99px;
+}
+.karte .kname{padding:7px 8px;font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.karte.leer{border-style:dashed;opacity:.55}
+.karte.leer .kname{color:var(--leise);font-family:var(--mono)}
+.silhouette{width:55%;height:55%;color:#3d4655}
+.leer-hinweis{grid-column:1/-1;text-align:center;padding:24px 0}
+
+/* ================= Detailansicht ================= */
+.schirm{
+  position:relative;border:4px solid #2b3340;border-radius:18px;overflow:hidden;
+  background:#0b0e12;aspect-ratio:4/5;max-height:62vh;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;
+}
+.schirm img{width:100%;height:100%;object-fit:cover}
+.schirm::after{ /* dezente Scanlines für den Bildschirm-Look */
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px);
+}
+.detail-kopfzeile{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.detail-kopfzeile h2{font-size:1.45rem;font-weight:800}
+.nr-badge{
+  font-family:var(--mono);font-size:.85rem;color:var(--rot);
+  border:1px solid var(--rot);border-radius:99px;padding:1px 9px;
+}
+.typ-badge{
+  display:inline-block;color:#fff;font-size:.78rem;font-weight:600;
+  padding:3px 11px;border-radius:99px;margin:2px 0 12px;
+}
+.daten{margin-bottom:12px}
+.daten .zeile{display:grid;grid-template-columns:132px 1fr;gap:8px;padding:9px 2px;border-top:1px solid var(--rand)}
+.daten dt{color:var(--leise);font-size:.82rem}
+.daten dd{font-size:.92rem;overflow-wrap:anywhere}
+.detail-karte h3{font-size:.82rem;color:var(--leise);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 4px}
+.notizen{white-space:pre-wrap;font-size:.95rem;overflow-wrap:anywhere}
+.knopf-reihe{display:flex;gap:10px;margin-top:18px}
+.knopf-reihe .btn{flex:1}
+
+/* ================= Steuerkreuz (funktional: blättern & zurück) ================= */
+.dpad{
+  display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);
+  width:max-content;margin:26px auto 6px;
+}
+.dp{
+  background:#262d38;border:1px solid #38414f;color:var(--leise);
+  font-size:.9rem;display:flex;align-items:center;justify-content:center;
+}
+.dp:active{background:#1c222c;transform:translateY(1px);color:var(--text)}
+.dp.hoch{grid-area:1/2;border-radius:10px 10px 0 0}
+.dp.links{grid-area:2/1;border-radius:10px 0 0 10px}
+.dp.rechts{grid-area:2/3;border-radius:0 10px 10px 0}
+.dp.runter{grid-area:3/2;border-radius:0 0 10px 10px}
+.dp.mitte{grid-area:2/2;position:relative}
+.dp.mitte::after{content:'';width:26px;height:26px;border-radius:50%;border:2px solid #38414f;background:#1b212b}
+
+/* ================= Formular ================= */
+h2.formular-titel{font-size:1.25rem;margin-bottom:16px}
+.foto-bereich{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+.foto-vorschau{
+  width:112px;height:112px;flex:none;border-radius:16px;overflow:hidden;
+  background:var(--flaeche2);border:1px solid var(--rand);
+  display:flex;align-items:center;justify-content:center;
+}
+.foto-vorschau img{width:100%;height:100%;object-fit:cover}
+.foto-knoepfe{display:flex;flex-direction:column;gap:8px;flex:1}
+label{display:block;margin-bottom:14px;font-size:.8rem;color:var(--leise);letter-spacing:.3px}
+input,textarea,select{
+  width:100%;margin-top:6px;padding:11px 12px;font:inherit;font-size:1rem;
+  background:var(--flaeche);color:var(--text);
+  border:1px solid var(--rand);border-radius:12px;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blau);box-shadow:0 0 0 2px rgba(56,189,248,.25)}
+input.fehler{border-color:var(--rot);box-shadow:0 0 0 2px rgba(227,53,13,.3)}
+textarea{resize:vertical}
+
+/* ================= Knöpfe, FAB, Modal, Toast ================= */
+.btn{
+  padding:10px 14px;border-radius:12px;font-weight:600;font-size:.92rem;
+  background:var(--flaeche2);border:1px solid var(--rand);
+}
+.btn:active{transform:scale(.97)}
+.btn-rot{background:var(--rot);border-color:var(--rot-dunkel);color:#fff}
+.btn-leise{background:transparent;color:var(--leise)}
+.breit{display:block;width:100%;margin-bottom:10px}
+.fab{
+  position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9;
+  width:58px;height:58px;border-radius:50%;font-size:1.9rem;line-height:1;color:#fff;
+  background:linear-gradient(180deg,var(--rot),#c22a09);
+  border:3px solid var(--rot-dunkel);box-shadow:0 4px 14px rgba(0,0,0,.5);
+}
+.fab:active{transform:scale(.92)}
+.modal-hintergrund{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.62);overflow:auto;padding:14px}
+.modal{
+  max-width:430px;margin:9vh auto;background:var(--flaeche);
+  border:1px solid var(--rand);border-radius:16px;padding:18px;
+}
+.modal-kopf{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.modal-kopf h2{font-size:1.1rem}
+.modal h3{font-size:.8rem;color:var(--leise);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px}
+.toast{
+  position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));z-index:30;
+  transform:translateX(-50%) translateY(12px);opacity:0;pointer-events:none;
+  background:var(--rot);color:#fff;font-weight:700;font-size:.88rem;
+  padding:9px 18px;border-radius:99px;box-shadow:0 4px 14px rgba(0,0,0,.5);
+  transition:opacity .2s,transform .2s;white-space:nowrap;
+}
+.toast.sichtbar{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (min-width:700px){
+  .raster{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:12px}
+  .schirm{max-width:420px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<header class="kopf">
+  <div class="kopf-innen">
+    <div class="linse" aria-hidden="true"></div>
+    <div class="leds" aria-hidden="true"><span class="led r"></span><span class="led g"></span><span class="led b"></span></div>
+    <h1>GesichterDex</h1>
+    <button class="icon-btn" id="btn-einstellungen" aria-label="Einstellungen öffnen">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== Ansicht 1: Dashboard / Raster ===== -->
+  <section id="ansicht-liste">
+    <div class="werkzeuge">
+      <input type="search" id="suche" placeholder="Suchen: Name, Fundort, Typ …" autocomplete="off">
+      <select id="sortierung" aria-label="Sortierung">
+        <option value="id">Nach Nr.</option>
+        <option value="name">A–Z</option>
+      </select>
+    </div>
+    <p class="zaehler" id="zaehler"></p>
+    <div class="raster" id="raster"></div>
+  </section>
+
+  <!-- ===== Ansicht 2: Detailkarte ===== -->
+  <section id="ansicht-detail" hidden>
+    <button class="zurueck" id="btn-zurueck-detail">‹ Übersicht</button>
+    <article class="detail-karte" id="detail-inhalt"></article>
+    <div class="dpad" role="group" aria-label="Blättern">
+      <button class="dp hoch"   id="dp-hoch"   aria-label="Zur Übersicht">▲</button>
+      <button class="dp links"  id="dp-links"  aria-label="Vorheriger Eintrag">◀</button>
+      <span   class="dp mitte" aria-hidden="true"></span>
+      <button class="dp rechts" id="dp-rechts" aria-label="Nächster Eintrag">▶</button>
+      <button class="dp runter" id="dp-runter" aria-label="Nach unten scrollen">▼</button>
+    </div>
+  </section>
+
+  <!-- ===== Ansicht 3: Eintrag anlegen / bearbeiten ("Scannen") ===== -->
+  <section id="ansicht-formular" hidden>
+    <button class="zurueck" id="btn-zurueck-formular">‹ Abbrechen</button>
+    <h2 class="formular-titel" id="formular-titel">Neues Gesicht scannen</h2>
+
+    <div class="foto-bereich">
+      <div class="foto-vorschau" id="foto-vorschau"></div>
+      <div class="foto-knoepfe">
+        <button class="btn" id="btn-kamera">📷 Kamera</button>
+        <button class="btn" id="btn-galerie">🖼️ Galerie</button>
+        <button class="btn btn-leise" id="btn-foto-entfernen" hidden>✕ Foto entfernen</button>
+      </div>
+    </div>
+
+    <label>Name / Spitzname *
+      <input id="feld-name" maxlength="60" autocomplete="off">
+    </label>
+    <label>Typ
+      <input id="feld-typ" list="typ-liste" placeholder="z. B. Schulfreund" maxlength="40" autocomplete="off">
+      <datalist id="typ-liste">
+        <option value="Schulfreund"></option>
+        <option value="Studium"></option>
+        <option value="Arbeit"></option>
+        <option value="Nachbar"></option>
+        <option value="Familie"></option>
+        <option value="Sportverein"></option>
+        <option value="Verein"></option>
+        <option value="Freundeskreis"></option>
+        <option value="Über Freunde bekannt"></option>
+        <option value="Sonstiges"></option>
+      </datalist>
+    </label>
+    <label>Fundort
+      <input id="feld-fundort" placeholder="Wo (wieder)getroffen?" maxlength="80" autocomplete="off">
+    </label>
+    <label>Erste Begegnung
+      <input id="feld-begegnung" placeholder="z. B. 2009, Grundschule" maxlength="80" autocomplete="off">
+    </label>
+    <label>Notizen / Anekdoten
+      <textarea id="feld-notizen" rows="4" placeholder="Merkmale, Geschichten, Kontext …"></textarea>
+    </label>
+    <button class="btn btn-rot breit" id="btn-speichern">Registrieren</button>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="Neuen Eintrag anlegen">＋</button>
+
+<!-- ===== Einstellungen (Modal) ===== -->
+<div class="modal-hintergrund" id="modal-hintergrund" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titel">
+    <div class="modal-kopf">
+      <h2 id="modal-titel">Einstellungen</h2>
+      <button class="icon-btn" id="btn-modal-zu" aria-label="Schließen" style="background:var(--flaeche2)">✕</button>
+    </div>
+    <p class="hinweis" id="statistik"></p>
+    <h3>Backup</h3>
+    <p class="hinweis" style="margin-bottom:10px">Alle Daten liegen ausschließlich in diesem Browser (IndexedDB). Regelmäßig exportieren – besonders vor Browser- oder Gerätewechsel.</p>
+    <button class="btn breit" id="btn-export">⬇️ Daten exportieren (JSON inkl. Fotos)</button>
+    <button class="btn breit" id="btn-import">⬆️ Daten importieren</button>
+    <h3>Gefahrenzone</h3>
+    <button class="btn btn-rot breit" id="btn-alles-loeschen">Alle Einträge löschen</button>
+    <p class="hinweis klein">GesichterDex v1 · 100 % offline · keine externen Verbindungen (per CSP erzwungen)</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<!-- Versteckte Datei-Eingaben (Kamera / Galerie / Import) -->
+<input type="file" id="datei-kamera"  accept="image/*" capture="environment" hidden>
+<input type="file" id="datei-galerie" accept="image/*" hidden>
+<input type="file" id="datei-import"  accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   GesichterDex – ein lokaler „Pokédex" für bekannte Gesichter.
+   Reines Vanilla-JS, alle Daten in IndexedDB, keine externen Anfragen.
+   ===================================================================== */
+
+/* ---------- 1. Konstanten & Zustand ---------- */
+const DB_NAME = 'gesichterdex_v1';
+const STORE   = 'eintraege';
+const $ = id => document.getElementById(id);
+
+let dbPromise;                 // Promise auf die geöffnete Datenbank
+let eintraege = [];            // In-Memory-Kopie aller Einträge
+let aktuelleId = null;         // In der Detailansicht angezeigter Eintrag
+let bearbeiteId = null;        // null = Formular legt neuen Eintrag an
+let formFoto = null;           // Blob des Fotos im Formular
+let formFotoGeaendert = false; // Wurde das Foto beim Bearbeiten verändert?
+let formVorschauURL = null;    // Objekt-URL der Formular-Vorschau
+const urlCache = new Map();    // id -> Objekt-URL (für Raster & Detail)
+
+/* ---------- 2. IndexedDB-Schicht ---------- */
+function dbOeffnen(){
+  return new Promise((erfuelle, lehneAb) => {
+    const anfrage = indexedDB.open(DB_NAME, 1);
+    anfrage.onupgradeneeded = () => {
+      const db = anfrage.result;
+      if(!db.objectStoreNames.contains(STORE)){
+        // keyPath "id" mit autoIncrement -> stabile Dex-Nummern
+        db.createObjectStore(STORE, { keyPath:'id', autoIncrement:true });
+      }
+    };
+    anfrage.onsuccess = () => erfuelle(anfrage.result);
+    anfrage.onerror   = () => lehneAb(anfrage.error);
+  });
+}
+
+/* Kleine Transaktions-Hilfe: führt eine Operation aus und liefert deren Ergebnis. */
+function tx(modus, arbeit){
+  return dbPromise.then(db => new Promise((erfuelle, lehneAb) => {
+    const t = db.transaction(STORE, modus);
+    const anfrage = arbeit(t.objectStore(STORE)); // IDBRequest oder undefined
+    t.oncomplete = () => erfuelle(anfrage ? anfrage.result : undefined);
+    t.onerror = () => lehneAb(t.error);
+    t.onabort = () => lehneAb(t.error || new Error('Transaktion abgebrochen'));
+  }));
+}
+const dbAlle      = ()  => tx('readonly',  s => s.getAll());
+const dbSpeichern = (e) => tx('readwrite', s => s.put(e));    // liefert den Schlüssel (id)
+const dbLoeschen  = id  => tx('readwrite', s => s.delete(id));
+const dbLeeren    = ()  => tx('readwrite', s => s.clear());
+
+/* ---------- 3. Bildverarbeitung ---------- */
+/* Fotos vor dem Speichern verkleinern (max. 1200 px, JPEG ~85 %),
+   damit die Datenbank und spätere JSON-Exporte schlank bleiben. */
+async function fotoVerkleinern(datei){
+  const url = URL.createObjectURL(datei);
+  try{
+    const bild = new Image();
+    bild.src = url;
+    await bild.decode(); // Browser richtet EXIF-Orientierung automatisch aus
+    const MAX = 1200;
+    const faktor = Math.min(1, MAX / Math.max(bild.naturalWidth, bild.naturalHeight));
+    const b = Math.max(1, Math.round(bild.naturalWidth  * faktor));
+    const h = Math.max(1, Math.round(bild.naturalHeight * faktor));
+    const leinwand = document.createElement('canvas');
+    leinwand.width = b; leinwand.height = h;
+    leinwand.getContext('2d').drawImage(bild, 0, 0, b, h);
+    const blob = await new Promise(f => leinwand.toBlob(f, 'image/jpeg', 0.85));
+    return blob || datei; // Notfall-Rückfall: Original speichern
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+const blobZuDataURL = blob => new Promise((erfuelle, lehneAb) => {
+  const leser = new FileReader();
+  leser.onload  = () => erfuelle(leser.result);
+  leser.onerror = () => lehneAb(leser.error);
+  leser.readAsDataURL(blob);
+});
+
+/* Base64 manuell dekodieren (fetch() auf data:-URLs würde die CSP blocken). */
+function dataURLzuBlob(dataURL){
+  const [kopf, daten] = dataURL.split(',');
+  const mime = (kopf.match(/data:(.*?);base64/) || [])[1] || 'image/jpeg';
+  const bin = atob(daten);
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+/* ---------- 4. Hilfsfunktionen ---------- */
+const esc = s => String(s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const fmtNr = id => '#' + String(id).padStart(3, '0');
+
+/* Stabile Badge-Farbe je Typ (Hash -> Farbton). */
+function typFarbe(typ){
+  let h = 0;
+  for(const zeichen of typ) h = (h * 31 + zeichen.codePointAt(0)) >>> 0;
+  return `hsl(${h % 360}, 55%, 34%)`;
+}
+
+function silhouette(){
+  return `<svg class="silhouette" viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="currentColor" d="M12 11.6a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.2c-4.3 0-7.8 2.3-7.8 5.2V21h15.6v-2c0-2.9-3.5-5.2-7.8-5.2Z"/></svg>`;
+}
+
+/* Objekt-URLs pro Eintrag cachen, damit das Raster nicht bei jedem Rendern
+   neue URLs erzeugt (Speicherlecks vermeiden). */
+function fotoURL(e){
+  if(!e.foto) return null;
+  if(!urlCache.has(e.id)) urlCache.set(e.id, URL.createObjectURL(e.foto));
+  return urlCache.get(e.id);
+}
+function urlVergessen(id){
+  if(urlCache.has(id)){ URL.revokeObjectURL(urlCache.get(id)); urlCache.delete(id); }
+}
+function alleURLsVergessen(){
+  for(const url of urlCache.values()) URL.revokeObjectURL(url);
+  urlCache.clear();
+}
+
+let toastTimer;
+function toast(text){
+  const t = $('toast');
+  t.textContent = text;
+  t.classList.add('sichtbar');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('sichtbar'), 2200);
+}
+
+/* ---------- 5. Ansichten & Rendering ---------- */
+function zeigeAnsicht(name){
+  $('ansicht-liste').hidden    = name !== 'liste';
+  $('ansicht-detail').hidden   = name !== 'detail';
+  $('ansicht-formular').hidden = name !== 'formular';
+  $('fab').hidden = name !== 'liste';
+  window.scrollTo(0, 0);
+  if(name === 'liste') renderListe();
+}
+
+/* Gefilterte + sortierte Liste – gemeinsam genutzt von Raster und Blätter-Navigation. */
+function sichtbareListe(){
+  const begriff = $('suche').value.trim().toLowerCase();
+  const liste = eintraege.filter(e =>
+    !begriff || [e.name, e.fundort, e.typ].some(w => (w || '').toLowerCase().includes(begriff)));
+  if($('sortierung').value === 'name'){
+    liste.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  } else {
+    liste.sort((a, b) => a.id - b.id);
+  }
+  return liste;
+}
+
+function karteHTML(e){
+  const url = fotoURL(e);
+  return `<button class="karte" data-id="${e.id}">
+    <span class="nr">${fmtNr(e.id)}</span>
+    <span class="foto">${url ? `<img src="${url}" alt="" loading="lazy">` : silhouette()}</span>
+    <span class="kname">${esc(e.name)}</span>
+  </button>`;
+}
+
+function platzhalterHTML(nr){
+  return `<div class="karte leer" aria-hidden="true">
+    <span class="nr">${fmtNr(nr)}</span>
+    <span class="foto">${silhouette()}</span>
+    <span class="kname">???</span>
+  </div>`;
+}
+
+function renderListe(){
+  const begriff = $('suche').value.trim();
+  const liste = sichtbareListe();
+  let html = liste.map(karteHTML).join('');
+
+  if(!begriff){
+    // Graue Platzhalter für „noch unentdeckte" Slots
+    const maxId = eintraege.reduce((m, e) => Math.max(m, e.id), 0);
+    const anzahl = eintraege.length === 0 ? 6 : 3;
+    for(let i = 1; i <= anzahl; i++) html += platzhalterHTML(maxId + i);
+    if(eintraege.length === 0){
+      html += `<p class="hinweis leer-hinweis">Noch niemand gefangen.<br>Tippe unten rechts auf ＋, um das erste Gesicht zu scannen.</p>`;
+    }
+  } else if(liste.length === 0){
+    html = `<p class="hinweis leer-hinweis">Keine Treffer für „${esc(begriff)}“.</p>`;
+  }
+
+  $('raster').innerHTML = html;
+  $('zaehler').textContent = begriff
+    ? `${liste.length} von ${eintraege.length} sichtbar`
+    : `Gefangen: ${String(eintraege.length).padStart(3, '0')}`;
+}
+
+function datenZeile(beschriftung, wert){
+  return `<div class="zeile"><dt>${beschriftung}</dt><dd>${esc(wert)}</dd></div>`;
+}
+
+function renderDetail(id){
+  const e = eintraege.find(x => x.id === id);
+  if(!e){ zeigeAnsicht('liste'); return; }
+  aktuelleId = id;
+  const url = fotoURL(e);
+
+  $('detail-inhalt').innerHTML = `
+    <div class="schirm">${url ? `<img src="${url}" alt="Foto von ${esc(e.name)}">` : silhouette()}</div>
+    <div class="detail-kopfzeile">
+      <h2>${esc(e.name)}</h2>
+      <span class="nr-badge">${fmtNr(e.id)}</span>
+    </div>
+    ${e.typ ? `<span class="typ-badge" style="background:${typFarbe(e.typ)}">${esc(e.typ)}</span>` : ''}
+    <dl class="daten">
+      ${e.fundort   ? datenZeile('📍 Fundort', e.fundort) : ''}
+      ${e.begegnung ? datenZeile('🕰️ Erste Begegnung', e.begegnung) : ''}
+    </dl>
+    ${e.notizen ? `<h3>Notizen</h3><p class="notizen">${esc(e.notizen)}</p>` : ''}
+    <div class="knopf-reihe">
+      <button class="btn" id="btn-bearbeiten">✏️ Bearbeiten</button>
+      <button class="btn btn-leise" id="btn-loeschen">🗑️ Löschen</button>
+    </div>`;
+
+  $('btn-bearbeiten').onclick = () => formularOeffnen(e.id);
+  $('btn-loeschen').onclick   = () => loeschen(e.id);
+  zeigeAnsicht('detail');
+}
+
+/* Blättern mit dem Steuerkreuz (folgt der aktuellen Filter-/Sortier-Reihenfolge). */
+function nachbar(richtung){
+  const liste = sichtbareListe();
+  if(liste.length === 0) return;
+  const i = liste.findIndex(e => e.id === aktuelleId);
+  const naechster = liste[((i < 0 ? 0 : i) + richtung + liste.length) % liste.length];
+  renderDetail(naechster.id);
+}
+
+/* ---------- 6. Formular (neu anlegen / bearbeiten) ---------- */
+function zeigeFormFoto(){
+  if(formVorschauURL){ URL.revokeObjectURL(formVorschauURL); formVorschauURL = null; }
+  if(formFoto){
+    formVorschauURL = URL.createObjectURL(formFoto);
+    $('foto-vorschau').innerHTML = `<img src="${formVorschauURL}" alt="Foto-Vorschau">`;
+    $('btn-foto-entfernen').hidden = false;
+  } else {
+    $('foto-vorschau').innerHTML = silhouette();
+    $('btn-foto-entfernen').hidden = true;
+  }
+}
+
+function formularOeffnen(id){
+  bearbeiteId = id ?? null;
+  const e = bearbeiteId != null ? eintraege.find(x => x.id === bearbeiteId) : null;
+
+  $('formular-titel').textContent = e ? `Eintrag ${fmtNr(e.id)} bearbeiten` : 'Neues Gesicht scannen';
+  $('feld-name').value      = e?.name      || '';
+  $('feld-typ').value       = e?.typ       || '';
+  $('feld-fundort').value   = e?.fundort   || '';
+  $('feld-begegnung').value = e?.begegnung || '';
+  $('feld-notizen').value   = e?.notizen   || '';
+  $('feld-name').classList.remove('fehler');
+  $('btn-speichern').textContent = e ? 'Speichern' : 'Registrieren';
+
+  formFoto = e?.foto || null;
+  formFotoGeaendert = false;
+  zeigeFormFoto();
+
+  zeigeAnsicht('formular');
+  if(!e) $('feld-name').focus();
+}
+
+async function dateiGewaehlt(ereignis){
+  const datei = ereignis.target.files[0];
+  ereignis.target.value = ''; // gleiche Datei erneut wählbar machen
+  if(!datei) return;
+  try{
+    formFoto = await fotoVerkleinern(datei);
+    formFotoGeaendert = true;
+    zeigeFormFoto();
+  } catch {
+    alert('Das Bild konnte nicht verarbeitet werden. Bitte ein anderes Format probieren (JPG/PNG).');
+  }
+}
+
+async function speichern(){
+  const name = $('feld-name').value.trim();
+  if(!name){
+    $('feld-name').classList.add('fehler');
+    $('feld-name').focus();
+    return;
+  }
+  const felder = {
+    name,
+    typ:       $('feld-typ').value.trim(),
+    fundort:   $('feld-fundort').value.trim(),
+    begegnung: $('feld-begegnung').value.trim(),
+    notizen:   $('feld-notizen').value.trim(),
+  };
+  $('btn-speichern').disabled = true;
+  try{
+    if(bearbeiteId == null){
+      // Neuer Eintrag – IndexedDB vergibt die nächste Dex-Nummer
+      const e = { ...felder, foto: formFoto, erstellt: new Date().toISOString() };
+      const id = await dbSpeichern(e);
+      e.id = id;
+      eintraege.push(e);
+      toast(`${fmtNr(id)} registriert!`);
+      renderDetail(id);
+    } else {
+      const e = eintraege.find(x => x.id === bearbeiteId);
+      Object.assign(e, felder);
+      if(formFotoGeaendert){
+        e.foto = formFoto;
+        urlVergessen(e.id); // alte Objekt-URL ungültig machen
+      }
+      await dbSpeichern(e);
+      toast('Gespeichert');
+      renderDetail(e.id);
+    }
+  } catch(fehler){
+    alert('Speichern fehlgeschlagen: ' + fehler);
+  } finally {
+    $('btn-speichern').disabled = false;
+  }
+}
+
+async function loeschen(id){
+  const e = eintraege.find(x => x.id === id);
+  if(!e) return;
+  if(!confirm(`Eintrag ${fmtNr(id)} „${e.name}“ endgültig löschen?`)) return;
+  try{
+    await dbLoeschen(id);
+    eintraege = eintraege.filter(x => x.id !== id);
+    urlVergessen(id);
+    toast('Freigelassen');
+    zeigeAnsicht('liste');
+  } catch(fehler){
+    alert('Löschen fehlgeschlagen: ' + fehler);
+  }
+}
+
+/* ---------- 7. Backup: Export & Import ---------- */
+async function exportieren(){
+  try{
+    const raus = [];
+    for(const e of eintraege){
+      raus.push({
+        id: e.id, name: e.name, typ: e.typ, fundort: e.fundort,
+        begegnung: e.begegnung, notizen: e.notizen, erstellt: e.erstellt,
+        foto: e.foto ? await blobZuDataURL(e.foto) : null, // Bilder als Base64 einbetten
+      });
+    }
+    const json = JSON.stringify({
+      app: 'gesichterdex', version: 1,
+      exportiertAm: new Date().toISOString(),
+      eintraege: raus,
+    }, null, 2);
+
+    const blob = new Blob([json], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `gesichterdex-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast(`${raus.length} Einträge exportiert`);
+  } catch(fehler){
+    alert('Export fehlgeschlagen: ' + fehler);
+  }
+}
+
+async function importieren(datei){
+  let daten;
+  try{
+    daten = JSON.parse(await datei.text());
+  } catch {
+    alert('Die Datei konnte nicht gelesen werden (kein gültiges JSON).');
+    return;
+  }
+  const roh = Array.isArray(daten) ? daten : daten.eintraege;
+  if(!Array.isArray(roh) || roh.length === 0){
+    alert('In der Datei wurden keine Einträge gefunden.');
+    return;
+  }
+  const ersetzen = confirm(
+    `${roh.length} Einträge in der Datei gefunden.\n\n` +
+    `OK = Bestehende Daten ERSETZEN\nAbbrechen = An bestehende Daten ANHÄNGEN`
+  );
+  try{
+    if(ersetzen) await dbLeeren();
+    for(const r of roh){
+      const e = {
+        name:      String(r.name || 'Unbekannt').slice(0, 60),
+        typ:       String(r.typ || '').slice(0, 40),
+        fundort:   String(r.fundort || '').slice(0, 80),
+        begegnung: String(r.begegnung || '').slice(0, 80),
+        notizen:   String(r.notizen || ''),
+        erstellt:  r.erstellt || new Date().toISOString(),
+        foto: (typeof r.foto === 'string' && r.foto.startsWith('data:')) ? dataURLzuBlob(r.foto) : null,
+      };
+      // Beim Ersetzen bleiben die alten Dex-Nummern erhalten; beim Anhängen werden neue vergeben.
+      if(ersetzen && Number.isInteger(r.id) && r.id > 0) e.id = r.id;
+      await dbSpeichern(e);
+    }
+    alleURLsVergessen();
+    eintraege = await dbAlle();
+    renderListe();
+    statistikAktualisieren();
+    toast(`${roh.length} Einträge importiert`);
+  } catch(fehler){
+    alert('Import fehlgeschlagen: ' + fehler);
+  }
+}
+
+/* ---------- 8. Einstellungen ---------- */
+function statistikAktualisieren(){
+  const bytes = eintraege.reduce((s, e) => s + (e.foto ? e.foto.size : 0), 0);
+  $('statistik').textContent =
+    `${eintraege.length} Einträge · Fotos: ${(bytes / 1048576).toFixed(1)} MB – alles nur auf diesem Gerät.`;
+}
+function modalOeffnen(){ statistikAktualisieren(); $('modal-hintergrund').hidden = false; }
+function modalSchliessen(){ $('modal-hintergrund').hidden = true; }
+
+async function allesLoeschen(){
+  if(eintraege.length === 0){ toast('Der Dex ist bereits leer'); return; }
+  if(!confirm(`Wirklich ALLE ${eintraege.length} Einträge löschen?`)) return;
+  if(!confirm('Letzte Warnung: Ohne Export-Backup sind die Daten unwiederbringlich weg. Fortfahren?')) return;
+  try{
+    await dbLeeren();
+    eintraege = [];
+    alleURLsVergessen();
+    renderListe();
+    statistikAktualisieren();
+    toast('Alles gelöscht');
+  } catch(fehler){
+    alert('Löschen fehlgeschlagen: ' + fehler);
+  }
+}
+
+/* ---------- 9. Ereignisse verbinden & Start ---------- */
+function ereignisseVerbinden(){
+  // Liste
+  $('suche').addEventListener('input', renderListe);
+  $('sortierung').addEventListener('change', () => {
+    try{ localStorage.setItem('gdex_sort', $('sortierung').value); } catch {}
+    renderListe();
+  });
+  $('raster').addEventListener('click', ereignis => {
+    const karte = ereignis.target.closest('.karte[data-id]');
+    if(karte) renderDetail(Number(karte.dataset.id));
+  });
+  $('fab').onclick = () => formularOeffnen(null);
+
+  // Detail + Steuerkreuz
+  $('btn-zurueck-detail').onclick = () => zeigeAnsicht('liste');
+  $('dp-hoch').onclick   = () => zeigeAnsicht('liste');
+  $('dp-links').onclick  = () => nachbar(-1);
+  $('dp-rechts').onclick = () => nachbar(1);
+  $('dp-runter').onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+  // Formular
+  $('btn-zurueck-formular').onclick = () =>
+    bearbeiteId != null ? renderDetail(bearbeiteId) : zeigeAnsicht('liste');
+  $('btn-kamera').onclick  = () => $('datei-kamera').click();
+  $('btn-galerie').onclick = () => $('datei-galerie').click();
+  $('datei-kamera').addEventListener('change', dateiGewaehlt);
+  $('datei-galerie').addEventListener('change', dateiGewaehlt);
+  $('btn-foto-entfernen').onclick = () => { formFoto = null; formFotoGeaendert = true; zeigeFormFoto(); };
+  $('feld-name').addEventListener('input', () => $('feld-name').classList.remove('fehler'));
+  $('btn-speichern').onclick = speichern;
+
+  // Einstellungen
+  $('btn-einstellungen').onclick = modalOeffnen;
+  $('btn-modal-zu').onclick = modalSchliessen;
+  $('modal-hintergrund').addEventListener('click', ereignis => {
+    if(ereignis.target === $('modal-hintergrund')) modalSchliessen();
+  });
+  $('btn-export').onclick = exportieren;
+  $('btn-import').onclick = () => $('datei-import').click();
+  $('datei-import').addEventListener('change', ereignis => {
+    const datei = ereignis.target.files[0];
+    ereignis.target.value = '';
+    if(datei) importieren(datei);
+  });
+  $('btn-alles-loeschen').onclick = allesLoeschen;
+
+  // Tastatur: Escape = zurück/schließen, Pfeile = blättern in der Detailansicht
+  document.addEventListener('keydown', ereignis => {
+    if(ereignis.key === 'Escape'){
+      if(/^(INPUT|TEXTAREA|SELECT)$/.test(ereignis.target.tagName)){ ereignis.target.blur(); return; }
+      if(!$('modal-hintergrund').hidden) modalSchliessen();
+      else if(!$('ansicht-detail').hidden || !$('ansicht-formular').hidden) zeigeAnsicht('liste');
+    }
+    if(!$('ansicht-detail').hidden){
+      if(ereignis.key === 'ArrowLeft')  nachbar(-1);
+      if(ereignis.key === 'ArrowRight') nachbar(1);
+    }
+  });
+}
+
+async function start(){
+  try{
+    dbPromise = dbOeffnen();
+    await dbPromise;
+    eintraege = await dbAlle();
+  } catch(fehler){
+    document.body.innerHTML =
+      '<p style="padding:24px;font-family:sans-serif">IndexedDB ist in diesem Browser nicht verfügbar ' +
+      '(z. B. in manchen privaten Fenstern). Die App benötigt IndexedDB zum Speichern.<br><br>' + esc(fehler) + '</p>';
+    return;
+  }
+  try{ $('sortierung').value = localStorage.getItem('gdex_sort') || 'id'; } catch {}
+  ereignisseVerbinden();
+  renderListe();
+}
+
+start();
+</script>
+</body>
+</html>
