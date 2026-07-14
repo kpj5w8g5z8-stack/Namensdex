@@ -9,31 +9,33 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GesichterDex">
+<meta name="apple-mobile-web-app-title" content="MeerbuschDex">
 <link rel="icon" href="data:,">
-<title>GesichterDex – lokaler Personen-Pokédex</title>
+<title>MeerbuschDex – Leute von früher, lokal dokumentiert</title>
 <style>
 /* =====================================================================
-   Farbwelt nach dem klassischen Kanto-Pokédex (Referenzfoto):
-   rot-oranges Gehäuse, weiße Schirmblende, schwarze Bildschirme,
-   blaue Tasten, gelber Rundknopf, schwarzes Steuerkreuz.
+   MeerbuschDex: Kanto-Pokédex trifft Meerbusch.
+   Gehäuse-Rot wie der Pokédex (deckt sich mit dem Wappenrot),
+   Gold/Gelb aus Wappen & Ortsschild, dazu der achtstrahlige
+   Meerbusch-Stern (acht Ortsteile) und eine Skyline-Silhouette
+   (K-Bahn, Teloy-Mühle, Pavillon, Wasserturm Lank-Latum).
    ===================================================================== */
 :root{
-  --shell:#e8422b;         /* Gehäuse-Rot */
+  --shell:#e8422b;         /* Gehäuse-/Wappenrot */
   --shell-hell:#f05a3e;
   --shell-dunkel:#c22f14;
-  --shell-tief:#8f1f09;    /* Kanten, Scharnier */
-  --weiss:#f4f1e8;         /* Schirmblende (warmes Plastikweiß) */
+  --shell-tief:#8f1f09;
+  --weiss:#f4f1e8;         /* Schirmblende */
   --schirm:#101014;        /* schwarze Bildschirme */
   --schirm-rand:#000;
-  --karte:#1d232c;         /* Karten im Bildschirm */
+  --karte:#1d232c;
   --karte-rand:#2c333f;
   --text:#e9edf3;
   --leise:#8f99a9;
-  --taste-blau:#4fb0e2;    /* Tastenfeld */
+  --taste-blau:#4fb0e2;
   --taste-blau-d:#2c7dab;
-  --gelb:#f7c948;          /* Rundknopf */
-  --gelb-d:#b8860b;
+  --gold:#f6c500;          /* Wappengold / Ortsschild-Gelb */
+  --gold-d:#a8790a;
   --gruen:#5be586;
   --lila:#a855f7;
   --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;
@@ -41,7 +43,10 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{
-  background:linear-gradient(180deg,var(--shell-hell) 0%,var(--shell) 30%,var(--shell-dunkel) 100%) fixed;
+  background:
+    repeating-conic-gradient(from 0deg at 50% -15%, rgba(0,0,0,.055) 0deg 8deg, transparent 8deg 16deg),
+    linear-gradient(180deg,var(--shell-hell) 0%,var(--shell) 30%,var(--shell-dunkel) 100%);
+  background-attachment:fixed;
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   line-height:1.5;min-height:100vh;
@@ -51,16 +56,16 @@ img{display:block;max-width:100%}
 [hidden]{display:none !important}
 :focus-visible{outline:2px solid #fff;outline-offset:2px}
 
-/* ================= Kopfleiste (Deckel mit Linse) ================= */
+/* ================= Kopfleiste (Deckel mit Linse & Stern) ================= */
 .kopf{
   position:sticky;top:0;z-index:10;
   background:linear-gradient(180deg,var(--shell-hell),var(--shell));
-  border-bottom:6px solid var(--shell-tief);   /* Scharnier-Kante */
+  border-bottom:6px solid var(--shell-tief);
   box-shadow:0 3px 10px rgba(0,0,0,.4);
   padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
 }
 .kopf-innen{display:flex;align-items:center;gap:12px;max-width:680px;margin:0 auto}
-.linse{ /* großer blauer Dom mit weißem Ring */
+.linse{
   width:46px;height:46px;border-radius:50%;flex:none;
   background:radial-gradient(circle at 32% 28%,#9fd4ff 0%,#3a7bd5 40%,#1b3fa0 72%,#0e1f57 100%);
   border:4px solid #f4f1e8;
@@ -71,7 +76,16 @@ img{display:block;max-width:100%}
 .led.r{background:radial-gradient(circle at 35% 30%,#ff9c88,#d92c14)}
 .led.gn{background:radial-gradient(circle at 35% 30%,#b6ffcb,#22b84e);animation:blinken 2.6s infinite}
 @keyframes blinken{0%,62%{opacity:1}72%{opacity:.35}82%{opacity:1}}
-.kopf h1{flex:1;font-size:1.15rem;font-weight:800;letter-spacing:.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.kopf h1{
+  flex:1;display:flex;align-items:center;gap:8px;
+  font-size:1.15rem;font-weight:800;font-style:italic;letter-spacing:.5px;color:#fff;
+  text-shadow:
+    -1.5px -1.5px 0 var(--shell-tief),1.5px -1.5px 0 var(--shell-tief),
+    -1.5px 1.5px 0 var(--shell-tief),1.5px 1.5px 0 var(--shell-tief),
+    0 3px 3px rgba(0,0,0,.5);
+}
+.kopf h1::after{content:'✨';font-style:normal;font-size:.85rem;margin-left:1px;display:inline-block;animation:funkeln 2.4s ease-in-out infinite}
+.stern-slot{display:inline-flex;width:21px;height:21px;flex:none;color:var(--gold);filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
 .icon-btn{
   width:42px;height:42px;border-radius:12px;font-size:1.25rem;flex:none;
   background:rgba(0,0,0,.28);border:1px solid rgba(0,0,0,.4);
@@ -87,14 +101,21 @@ main{max-width:680px;margin:0 auto;padding:14px 14px calc(100px + env(safe-area-
 .hinweis.klein{font-size:.75rem;margin-top:14px}
 .auf-rot{color:rgba(255,255,255,.82)}
 h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);margin-bottom:12px}
-
-/* Schwarzer „Bildschirm" als Inhaltsfläche (wie die Screens der rechten Klappe) */
 .panel{
   background:var(--schirm);
   border:2px solid var(--schirm-rand);border-radius:14px;
   box-shadow:inset 0 2px 8px rgba(0,0,0,.75),0 1px 0 rgba(255,255,255,.22);
   padding:12px;
 }
+
+/* ================= Meerbusch-Stern & Skyline (Inline-SVG) ================= */
+.stern polygon{fill:currentColor}
+.stern line{stroke:rgba(0,0,0,.35);stroke-width:1.4}
+.skyline{display:block;width:100%;height:auto}
+.skyline .flaeche{fill:currentColor}
+.skyline .strich{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.skyline .fein{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round}
+.skyline-fuss{color:rgba(25,10,4,.32);margin:18px auto 0;max-width:420px;filter:drop-shadow(0 1px 0 rgba(255,255,255,.14))}
 
 /* ================= Tasten (blaues Tastenfeld & Co.) ================= */
 .taste{
@@ -109,8 +130,8 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
   box-shadow:inset 0 0 0 2px #fff,inset 0 1px 0 rgba(255,255,255,.6);
 }
 .taste-gelb{
-  background:linear-gradient(180deg,#ffe08a,var(--gelb) 45%,#e0a90f);
-  border-color:var(--gelb-d);color:#3a2a00;
+  background:linear-gradient(180deg,#ffe064,var(--gold) 45%,#d9a800);
+  border-color:var(--gold-d);color:#3a2a00;
 }
 .taste-dunkel{
   background:linear-gradient(180deg,#8c2410,#6e1a08);
@@ -128,7 +149,8 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
 .raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
 .karte{
   display:flex;flex-direction:column;text-align:left;position:relative;
-  background:var(--karte);border:1px solid var(--karte-rand);border-radius:12px;overflow:hidden;
+  background:var(--karte);border:1.5px solid #000;border-radius:12px;overflow:hidden;
+  box-shadow:0 2px 0 rgba(0,0,0,.35);
   transition:transform .1s;
 }
 .karte:active{transform:scale(.96)}
@@ -143,18 +165,26 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
 .karte.leer{border-style:dashed;opacity:.55}
 .karte.leer .kname{color:var(--leise);font-family:var(--mono)}
 .silhouette{width:55%;height:55%;color:#39424f}
-.leer-hinweis{grid-column:1/-1;text-align:center;padding:24px 0}
+.leer-hinweis{grid-column:1/-1;text-align:center;padding:20px 6px}
+.leer-skyline{color:var(--gold);opacity:.6;max-width:330px;margin:0 auto 12px}
 
-/* ================= Detailansicht: weiße Schirmblende ================= */
-.bezel{ /* die charakteristische weiße Platte mit abgeschrägter Ecke unten links */
+/* ================= Detailansicht: weiße Schirmblende + Ortsschild ================= */
+.bezel{
   background:linear-gradient(180deg,#faf8f1,var(--weiss));
   border-radius:10px;padding:16px 16px 32px;position:relative;margin-bottom:16px;
   clip-path:polygon(0 0,100% 0,100% 100%,15% 100%,0 calc(100% - 38px));
   box-shadow:0 3px 0 rgba(0,0,0,.28);
 }
-.bezel-punkte{ /* zwei kleine rote Punkte oben mittig */
+.bezel-punkte{
   position:absolute;top:7px;left:50%;transform:translateX(-15px);
   width:7px;height:7px;border-radius:50%;background:#d92c14;box-shadow:23px 0 0 #d92c14;
+}
+.bezel-stern{position:absolute;top:9px;left:12px;width:18px;height:18px;color:#d92c14}
+.bezel-zaehler{
+  position:absolute;top:9px;right:14px;z-index:1;
+  font-family:var(--mono);font-size:.68rem;color:var(--gruen);letter-spacing:.5px;
+  background:var(--schirm);border:1.5px solid #000;border-radius:4px;padding:1px 7px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.7);
 }
 .bezel-schirm{
   border:2px solid #c9c5b8;background:#0b0e12;border-radius:4px;overflow:hidden;
@@ -162,26 +192,39 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
   display:flex;align-items:center;justify-content:center;
 }
 .bezel-schirm img{width:100%;height:100%;object-fit:cover}
-.bezel-led{ /* rote LED unten links neben der Schräge */
+.bezel-led{
   position:absolute;bottom:10px;left:18%;width:13px;height:13px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ff9c88,#d92c14);
   box-shadow:0 1px 2px rgba(0,0,0,.35);
 }
-.bezel-vents{ /* Lüftungsschlitze unten rechts */
+.bezel-vents{
   position:absolute;bottom:9px;right:16px;width:42px;height:15px;
   background:repeating-linear-gradient(180deg,#b7b3a6 0 2px,transparent 2px 5px);
 }
-.detail-kopfzeile{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.detail-kopfzeile h2{font-size:1.45rem;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
-.nr-badge{
-  font-family:var(--mono);font-size:.85rem;color:#fff;
-  border:1px solid rgba(255,255,255,.85);border-radius:99px;padding:1px 9px;
+
+/* Der Personenname als Meerbuscher Ortsschild */
+.ortsschild{
+  position:relative;background:linear-gradient(180deg,#ffd018,var(--gold) 55%,#e9ba00);
+  border:3px solid #131313;border-radius:12px;
+  padding:16px 14px 6px;margin-bottom:16px;
+  box-shadow:0 3px 0 rgba(0,0,0,.3),inset 0 0 0 2px rgba(255,255,255,.28);
 }
-.typ-badge{
-  display:inline-block;color:#fff;font-size:.78rem;font-weight:600;
-  padding:3px 11px;border-radius:99px;margin:2px 0 12px;
-  border:1px solid rgba(255,255,255,.35);
+.ortsschild::before,.ortsschild::after{ /* Befestigungsschrauben */
+  content:'';position:absolute;top:7px;width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f2f2f2,#8a8a8a);
+  box-shadow:inset 0 0 2px #333;
 }
+.ortsschild::before{left:10px}
+.ortsschild::after{right:10px}
+.os-name{
+  font-weight:900;color:#111;text-transform:uppercase;letter-spacing:1px;
+  font-size:clamp(1.35rem,7.5vw,2rem);line-height:1.12;text-align:center;overflow-wrap:anywhere;
+}
+.os-unter{
+  color:#111;text-transform:uppercase;font-weight:700;letter-spacing:2.5px;
+  font-size:.7rem;text-align:center;margin-top:5px;font-family:var(--mono);
+}
+.ortsschild .skyline{margin-top:9px;color:#131313}
 .daten{margin:0}
 .daten .zeile{display:grid;grid-template-columns:132px 1fr;gap:8px;padding:9px 2px;border-top:1px solid #262d38}
 .daten .zeile:first-child{border-top:none}
@@ -192,7 +235,42 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
 .knopf-reihe{display:flex;gap:10px;margin-top:18px}
 .knopf-reihe .taste{flex:1;padding:11px 12px;font-size:.9rem}
 
-/* ================= Steuerkreuz (schwarz, glänzend) + Lautsprecher ================= */
+/* Dex-Stimme: Anime-Pokédex-Vorlesetext als Sprechblasen-Zeile */
+.dex-stimme{
+  display:flex;align-items:flex-start;gap:9px;
+  background:var(--schirm);border:2px solid #000;border-radius:10px;
+  padding:10px 12px;margin-bottom:16px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.75);
+}
+.dex-stimme .dex-symbol{
+  flex:none;width:22px;height:22px;border-radius:50%;margin-top:1px;
+  background:radial-gradient(circle at 32% 28%,#9fd4ff 0%,#3a7bd5 45%,#1b3fa0 78%,#0e1f57 100%);
+  border:2px solid #fff;
+}
+.dex-stimme p{font-family:var(--mono);font-size:.82rem;color:var(--gruen);line-height:1.5;overflow-wrap:anywhere}
+.dex-stimme .cursor{display:inline-block;animation:blinkcursor 1s steps(1) infinite}
+@keyframes blinkcursor{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* Funkel-Sparkles (Anime-Glanzpunkte) */
+.funkel{display:inline-block;animation:funkeln 2.4s ease-in-out infinite}
+.funkel.f2{animation-delay:.7s}
+@keyframes funkeln{0%,100%{opacity:.4;transform:scale(.8) rotate(0deg)}50%{opacity:1;transform:scale(1.08) rotate(10deg)}}
+
+/* Pokémon-Snap-Sucher: Kamera-Fadenkreuz-Ecken auf Fotoflächen */
+.sucher{position:relative}
+.sucher .ecke{position:absolute;width:15px;height:15px;border-color:#fff;opacity:.92;pointer-events:none;filter:drop-shadow(0 0 2px rgba(0,0,0,.65))}
+.sucher .eck-ol{top:6px;left:6px;border-top:3px solid;border-left:3px solid}
+.sucher .eck-or{top:6px;right:6px;border-top:3px solid;border-right:3px solid}
+.sucher .eck-ul{bottom:6px;left:6px;border-bottom:3px solid;border-left:3px solid}
+.sucher .eck-ur{bottom:6px;right:6px;border-bottom:3px solid;border-right:3px solid}
+.sucher .rec{position:absolute;top:8px;right:26px;display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.6rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+.sucher .rec::before{content:'';width:6px;height:6px;border-radius:50%;background:#ff3b30;animation:recpuls 1.4s infinite}
+@keyframes recpuls{0%,100%{opacity:1}50%{opacity:.25}}
+.blitz-overlay{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;border-radius:inherit}
+.blitz-overlay.an{animation:blitzflash .35s ease-out}
+@keyframes blitzflash{0%{opacity:.95}100%{opacity:0}}
+
+/* ================= Steuerkreuz + Lautsprecher ================= */
 .detail-fuss{display:flex;align-items:center;justify-content:center;gap:26px;margin:28px auto 6px}
 .dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);width:max-content}
 .dp{
@@ -212,7 +290,7 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
   background:radial-gradient(circle at 35% 30%,#3a3c42,#0d0e11);
   border:2px solid #000;
 }
-.lautsprecher{ /* Deko: Lautsprecherschlitze wie links neben dem Steuerkreuz */
+.lautsprecher{
   width:92px;height:110px;border-radius:12px;
   background:repeating-linear-gradient(180deg,rgba(0,0,0,.85) 0 7px,transparent 7px 16px);
   filter:drop-shadow(0 1px 0 rgba(255,255,255,.18));
@@ -220,7 +298,7 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
 
 /* ================= Formular ================= */
 .foto-bereich{display:flex;gap:14px;align-items:center;margin-bottom:16px}
-.foto-vorschau{ /* Mini-Version der weißen Blende */
+.foto-vorschau{
   width:118px;height:118px;flex:none;border-radius:10px;overflow:hidden;
   background:var(--weiss);padding:7px;box-shadow:0 2px 0 rgba(0,0,0,.28);
 }
@@ -228,6 +306,7 @@ h2.abschnitt{color:#fff;font-size:1.25rem;text-shadow:0 1px 2px rgba(0,0,0,.35);
   width:100%;height:100%;border:2px solid #c9c5b8;border-radius:4px;overflow:hidden;
   background:#0b0e12;display:flex;align-items:center;justify-content:center;
 }
+.foto-vorschau .innen>div{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
 .foto-vorschau img{width:100%;height:100%;object-fit:cover}
 .foto-knoepfe{display:flex;flex-direction:column;gap:8px;flex:1}
 label{display:block;margin:0 0 6px;font-size:.8rem;color:var(--leise);letter-spacing:.3px}
@@ -263,7 +342,7 @@ textarea{resize:vertical}
 #netz-svg .hub text{fill:#f2f5ff;font-size:11.5px;font-weight:600}
 #netz-svg .kat-typ rect{fill:#341a52;stroke:var(--lila)}
 #netz-svg .kat-fundort rect{fill:#0c3752;stroke:#38bdf8}
-#netz-svg .kat-begegnung rect{fill:#4a3608;stroke:var(--gelb)}
+#netz-svg .kat-begegnung rect{fill:#4a3608;stroke:var(--gold)}
 #netz-svg .gedimmt{opacity:.15}
 #netz-svg .hub.aktiv rect{stroke-width:3.5;filter:brightness(1.5)}
 .legende{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:.78rem;color:rgba(255,255,255,.85)}
@@ -275,8 +354,9 @@ textarea{resize:vertical}
 .fab{
   position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:9;
   width:60px;height:60px;border-radius:50%;font-size:1.9rem;line-height:1;color:#3a2a00;
-  background:radial-gradient(circle at 35% 28%,#ffe89b,var(--gelb) 55%,#dfa60d);
-  border:3px solid var(--gelb-d);box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 -3px 4px rgba(0,0,0,.2);
+  background:radial-gradient(circle at 35% 28%,#ffe064,var(--gold) 55%,#d9a800);
+  border:3px solid var(--gold-d);
+  box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 -3px 4px rgba(0,0,0,.2),inset 0 0 0 3px rgba(255,255,255,.28);
 }
 .fab:active{transform:scale(.92)}
 .modal-hintergrund{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.62);overflow:auto;padding:14px}
@@ -289,7 +369,7 @@ textarea{resize:vertical}
 .modal-kopf{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .modal-kopf h2{font-size:1.1rem;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .modal h3{font-size:.78rem;color:rgba(255,255,255,.9);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px;text-shadow:0 1px 1px rgba(0,0,0,.3)}
-.anzeige{ /* kleines grünes Status-Display */
+.anzeige{
   font-family:var(--mono);font-size:.8rem;color:var(--gruen);
   background:var(--schirm);border:2px solid var(--schirm-rand);border-radius:10px;
   box-shadow:inset 0 2px 6px rgba(0,0,0,.75);padding:10px 12px;
@@ -306,7 +386,8 @@ textarea{resize:vertical}
 
 @media (min-width:700px){
   .raster{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:12px}
-  .bezel{max-width:440px;margin-left:auto;margin-right:auto}
+  .bezel,.ortsschild{max-width:440px;margin-left:auto;margin-right:auto}
+  .ortsschild{margin-bottom:16px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
@@ -319,7 +400,7 @@ textarea{resize:vertical}
   <div class="kopf-innen">
     <div class="linse" aria-hidden="true"></div>
     <div class="leds" aria-hidden="true"><span class="led r"></span><span class="led gn"></span></div>
-    <h1>GesichterDex</h1>
+    <h1><span class="stern-slot" id="stern-slot" aria-hidden="true"></span>MeerbuschDex</h1>
     <button class="icon-btn" id="btn-einstellungen" aria-label="Einstellungen öffnen">⚙️</button>
   </div>
 </header>
@@ -339,6 +420,7 @@ textarea{resize:vertical}
     <div class="panel">
       <div class="raster" id="raster"></div>
     </div>
+    <div class="skyline-fuss" id="skyline-fuss" aria-hidden="true"></div>
   </section>
 
   <!-- ===== Ansicht 2: Detailkarte ===== -->
@@ -363,7 +445,15 @@ textarea{resize:vertical}
     <h2 class="abschnitt" id="formular-titel">Neues Gesicht scannen</h2>
 
     <div class="foto-bereich">
-      <div class="foto-vorschau"><div class="innen" id="foto-vorschau"></div></div>
+      <div class="foto-vorschau"><div class="innen sucher" id="foto-vorschau">
+        <div id="foto-vorschau-bild"></div>
+        <span class="ecke eck-ol" aria-hidden="true"></span>
+        <span class="ecke eck-or" aria-hidden="true"></span>
+        <span class="ecke eck-ul" aria-hidden="true"></span>
+        <span class="ecke eck-ur" aria-hidden="true"></span>
+        <span class="rec">REC</span>
+        <span class="blitz-overlay" id="foto-blitz" aria-hidden="true"></span>
+      </div></div>
       <div class="foto-knoepfe">
         <button class="taste" id="btn-kamera">📷 Kamera</button>
         <button class="taste" id="btn-galerie">🖼️ Galerie</button>
@@ -395,7 +485,7 @@ textarea{resize:vertical}
       </div>
       <div class="feld-gruppe">
         <label for="feld-fundort">Fundort</label>
-        <input id="feld-fundort" placeholder="Wo (wieder)getroffen?" maxlength="80" autocomplete="off">
+        <input id="feld-fundort" placeholder="z. B. Lank-Latum, Büderich …" maxlength="80" autocomplete="off">
         <div class="tasten" id="tasten-fundort"></div>
       </div>
       <div class="feld-gruppe">
@@ -428,7 +518,7 @@ textarea{resize:vertical}
     <div class="legende" aria-hidden="true">
       <span><i style="background:#341a52;border:1.5px solid var(--lila)"></i> Typ</span>
       <span><i style="background:#0c3752;border:1.5px solid #38bdf8"></i> Fundort</span>
-      <span><i style="background:#4a3608;border:1.5px solid var(--gelb)"></i> Erste Begegnung</span>
+      <span><i style="background:#4a3608;border:1.5px solid var(--gold)"></i> Erste Begegnung</span>
     </div>
   </section>
 </main>
@@ -449,7 +539,7 @@ textarea{resize:vertical}
     <button class="taste breit" id="btn-import">⬆️ Daten importieren</button>
     <h3>Gefahrenzone</h3>
     <button class="taste taste-dunkel breit" id="btn-alles-loeschen">Alle Einträge löschen</button>
-    <p class="hinweis klein auf-rot">GesichterDex v2 · 100 % offline · keine externen Verbindungen (per CSP erzwungen)</p>
+    <p class="hinweis klein auf-rot">MeerbuschDex v4 · Foto-Safari durch acht Ortsteile · 100 % offline · keine externen Verbindungen (per CSP erzwungen)</p>
   </div>
 </div>
 
@@ -464,14 +554,18 @@ textarea{resize:vertical}
 'use strict';
 
 /* =====================================================================
-   GesichterDex v2 – ein lokaler „Pokédex" für bekannte Gesichter.
+   MeerbuschDex v4 – ein lokaler „Pokédex" für Leute von früher.
    Reines Vanilla-JS, alle Daten in IndexedDB, keine externen Anfragen.
-   Neu in v2: Kanto-Design, Schnellwahl-Tasten aus bereits eingegebenen
-   Werten und das Verbindungsnetz (Mindmap über gemeinsame Merkmale).
+   Neu in v4: Anime-Pokédex-Look (Dex-Stimme mit Sprüchen, Funkel-Sparkles,
+   Sonnenstrahlen-Hintergrund) kombiniert mit Pokémon-Snap-N64-Elementen
+   (Kamera-Sucher-Ecken, Blitz beim Foto, LCD-Bildzähler) sowie das
+   Teehäuschen (Wahrzeichen Meerbuschs) neu in der Skyline.
    ===================================================================== */
 
 /* ---------- 1. Konstanten & Zustand ---------- */
-const DB_NAME = 'gesichterdex_v1';   // Schema unverändert -> v1-Daten bleiben erhalten
+/* Der DB-Name bleibt bewusst beim historischen Wert, damit alle
+   bestehenden Einträge nach der Umbenennung erhalten bleiben. */
+const DB_NAME = 'gesichterdex_v1';
 const STORE   = 'eintraege';
 const $ = id => document.getElementById(id);
 
@@ -485,6 +579,9 @@ let formVorschauURL = null;
 const urlCache = new Map();          // id -> Objekt-URL
 
 const TYP_VORSCHLAEGE = ['Schulfreund', 'Arbeit', 'Nachbar', 'Familie', 'Sportverein'];
+/* Die acht Ortsteile – der achtstrahlige Stern im Wappen steht genau dafür. */
+const ORTSTEILE = ['Büderich', 'Osterath', 'Lank-Latum', 'Strümp', 'Ossum-Bösinghoven', 'Langst-Kierst', 'Nierst', 'Ilverich'];
+const BEGEGNUNG_VORSCHLAEGE = ['Grundschule', 'Gymnasium', 'Realschule', 'Kindergarten', 'Ausbildung'];
 
 /* ---------- 2. IndexedDB-Schicht ---------- */
 function dbOeffnen(){
@@ -554,15 +651,85 @@ const esc = s => String(s).replace(/[&<>"']/g,
   c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtNr = id => '#' + String(id).padStart(3, '0');
 
-function typFarbe(typ){
-  let h = 0;
-  for(const zeichen of typ) h = (h * 31 + zeichen.codePointAt(0)) >>> 0;
-  return `hsl(${h % 360}, 55%, 34%)`;
-}
 function silhouette(){
   return `<svg class="silhouette" viewBox="0 0 24 24" aria-hidden="true">
     <path fill="currentColor" d="M12 11.6a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2.2c-4.3 0-7.8 2.3-7.8 5.2V21h15.6v-2c0-2.9-3.5-5.2-7.8-5.2Z"/></svg>`;
 }
+
+/* Der achtstrahlige Meerbusch-Stern aus dem Wappen:
+   acht Rauten mit Facettenlinien, zur Laufzeit exakt berechnet. */
+function sternSVG(klasse = ''){
+  const xy = (r, grad) => {
+    const b = (grad - 90) * Math.PI / 180;
+    return [(50 + r * Math.cos(b)).toFixed(1), (50 + r * Math.sin(b)).toFixed(1)];
+  };
+  let t = '';
+  for(let k = 0; k < 8; k++){
+    const a = k * 45;
+    const [x1, y1] = xy(46, a);
+    const [x2, y2] = xy(18, a + 22.5);
+    const [x3, y3] = xy(3, a);
+    const [x4, y4] = xy(18, a - 22.5);
+    t += `<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3} ${x4},${y4}"/>`;
+    t += `<line x1="50" y1="50" x2="${x1}" y2="${y1}"/>`;
+  }
+  return `<svg class="stern ${klasse}" viewBox="0 0 100 100" aria-hidden="true" width="100%" height="100%">${t}</svg>`;
+}
+
+/* Meerbusch-Skyline als Silhouette (frei nach dem Ortsschild):
+   K-Bahn-Oberleitung, Andreaskreuz, Teloy-Mühle, Kuppelpavillon,
+   Signal, Wasserturm Lank-Latum, Busch. */
+function skylineSVG(){
+  return `<svg class="skyline" viewBox="0 -3 340 67" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+    <path class="fein" d="M0 15 H112"/><path class="fein" d="M0 19 H112"/>
+    <rect class="flaeche" x="23" y="10" width="2.6" height="48"/>
+    <rect class="flaeche" x="12" y="10" width="24" height="2.2"/>
+    <rect class="flaeche" x="58" y="28" width="3" height="30"/>
+    <g transform="translate(59.5,22)">
+      <rect class="flaeche" x="-12" y="-2.2" width="24" height="4.4" transform="rotate(30)"/>
+      <rect class="flaeche" x="-12" y="-2.2" width="24" height="4.4" transform="rotate(-30)"/>
+    </g>
+    <path class="fein" d="M93 10q3-4 6 0q3-4 6 0"/><path class="fein" d="M110 16q2.5-3.5 5 0q2.5-3.5 5 0"/>
+    <g transform="translate(118,0)">
+      <path class="flaeche" d="M8 58 L12 28 L26 28 L30 58 Z"/>
+      <path class="flaeche" d="M10 28 Q19 17 28 28 Z"/>
+      <g transform="translate(19,26) rotate(22)">
+        <rect class="flaeche" x="-1.5" y="-22" width="3" height="19"/>
+        <rect class="flaeche" x="-1.5" y="3" width="3" height="19"/>
+        <rect class="flaeche" x="-22" y="-1.5" width="19" height="3"/>
+        <rect class="flaeche" x="3" y="-1.5" width="19" height="3"/>
+      </g>
+    </g>
+    <g transform="translate(174,0)"> <!-- Teehäuschen, Wahrzeichen Meerbuschs (Haus Meer, Büderich) -->
+      <path class="flaeche" d="M2 34 L21 15 L40 34 Z"/>
+      <rect class="flaeche" x="17" y="6" width="8" height="10"/>
+      <path class="flaeche" d="M15.5 6 L21 -0.5 L26.5 6 Z"/>
+      <circle class="flaeche" cx="21" cy="-1.4" r="1.1"/>
+      <path class="fein" d="M17 16 H25"/>
+      <rect class="flaeche" x="6" y="34" width="30" height="14"/>
+      <path class="fein" d="M11 46 V40 Q13 36 15 40 V46"/>
+      <path class="fein" d="M19 46 V40 Q21 36 23 40 V46"/>
+      <path class="fein" d="M27 46 V40 Q29 36 31 40 V46"/>
+      <rect class="flaeche" x="4" y="48" width="34" height="3"/>
+      <rect class="flaeche" x="1" y="51" width="40" height="3"/>
+      <rect class="flaeche" x="-2" y="54" width="46" height="3"/>
+    </g>
+    <rect class="flaeche" x="232" y="32" width="2.5" height="26"/>
+    <circle class="flaeche" cx="233.2" cy="27" r="3.4"/><circle class="flaeche" cx="233.2" cy="19" r="3.4"/>
+    <g transform="translate(252,0)">
+      <rect class="flaeche" x="29.3" y="2" width="1.4" height="4"/>
+      <path class="flaeche" d="M21 14 L30 3.5 L39 14 Z"/>
+      <rect class="flaeche" x="15" y="14" width="30" height="3"/>
+      <path class="flaeche" d="M16 17 L44 17 L35 33 L25 33 Z"/>
+      <path class="strich" d="M25 33 L15 58 M35 33 L45 58"/>
+      <path class="strich" d="M17.5 50 H42.5 M20 42 H40 M22.5 35.5 H37.5"/>
+      <path class="fein" d="M17.5 50 L40 42 M42.5 50 L20 42 M20 42 L37.5 35.5 M40 42 L22.5 35.5"/>
+    </g>
+    <ellipse class="flaeche" cx="318" cy="53" rx="13" ry="8"/><ellipse class="flaeche" cx="330" cy="55" rx="9" ry="6"/>
+    <path class="flaeche" d="M0 58 q42 -4 84 0 t84 0 t84 0 t88 0 V64 H0 Z"/>
+  </svg>`;
+}
+
 function fotoURL(e){
   if(!e.foto) return null;
   if(!urlCache.has(e.id)) urlCache.set(e.id, URL.createObjectURL(e.foto));
@@ -615,10 +782,11 @@ function karteHTML(e){
     <span class="kname">${esc(e.name)}</span>
   </button>`;
 }
+/* Unentdeckte Slots zeigen den Meerbusch-Stern statt einer Person. */
 function platzhalterHTML(nr){
   return `<div class="karte leer" aria-hidden="true">
     <span class="nr">${fmtNr(nr)}</span>
-    <span class="foto">${silhouette()}</span>
+    <span class="foto"><span class="silhouette">${sternSVG()}</span></span>
     <span class="kname">???</span>
   </div>`;
 }
@@ -633,7 +801,10 @@ function renderListe(){
     const anzahl = eintraege.length === 0 ? 6 : 3;
     for(let i = 1; i <= anzahl; i++) html += platzhalterHTML(maxId + i);
     if(eintraege.length === 0){
-      html += `<p class="hinweis leer-hinweis">Noch niemand gefangen.<br>Tippe unten rechts auf den gelben Knopf, um das erste Gesicht zu scannen.</p>`;
+      html += `<div class="leer-hinweis">
+        <div class="leer-skyline">${skylineSVG()}</div>
+        <p class="hinweis"><span class="funkel">✨</span> Die Foto-Safari durch Meerbusch wartet <span class="funkel f2">✨</span><br>Tippe unten rechts auf den gelben Auslöser, um dein erstes Gesicht zu schnappen.</p>
+      </div>`;
     }
   } else if(liste.length === 0){
     html = `<p class="hinweis leer-hinweis">Keine Treffer für „${esc(begriff)}“.</p>`;
@@ -649,25 +820,52 @@ function datenZeile(beschriftung, wert){
   return `<div class="zeile"><dt>${beschriftung}</dt><dd>${esc(wert)}</dd></div>`;
 }
 
+/* Anime-Pokédex-Sprachausgabe: baut aus den vorhandenen Feldern einen
+   Dex-Spruch im Stil "NAME. Das X-Pokémon. Fakt." zusammen. Deterministisch
+   (per ID), damit derselbe Eintrag beim erneuten Öffnen denselben Text zeigt. */
+function dexSpruch(e){
+  const artikel = e.typ ? `Das ${e.typ}-Pokémon` : 'Ein wildes Meerbusch-Pokémon';
+  const teile = [];
+  if(e.begegnung) teile.push(`Erstkontakt: ${e.begegnung}.`);
+  if(e.fundort)   teile.push(`Zuletzt gesichtet in ${e.fundort}.`);
+  if(teile.length === 0) teile.push('Noch kaum erforscht – Datenlage dünn.');
+  const kern = (e.id % 2 === 0) ? teile.join(' ') : teile.slice().reverse().join(' ');
+  const schluss = e.notizen ? ' Verhalten: siehe Notizen.' : '';
+  return `${e.name.toUpperCase()}. ${artikel}. ${kern}${schluss}`;
+}
+
 function renderDetail(id){
   const e = eintraege.find(x => x.id === id);
   if(!e){ zeigeAnsicht('liste'); return; }
   aktuelleId = id;
   const url = fotoURL(e);
   const hatDaten = e.fundort || e.begegnung;
+  const unterzeile = `${e.typ ? esc(e.typ) : 'Meerbusch'} · ${fmtNr(e.id)}`;
 
   $('detail-inhalt').innerHTML = `
     <div class="bezel">
       <span class="bezel-punkte" aria-hidden="true"></span>
-      <div class="bezel-schirm">${url ? `<img src="${url}" alt="Foto von ${esc(e.name)}">` : silhouette()}</div>
+      <span class="bezel-stern" aria-hidden="true">${sternSVG()}</span>
+      <span class="bezel-zaehler" aria-hidden="true">${fmtNr(e.id)}</span>
+      <div class="bezel-schirm sucher">
+        ${url ? `<img src="${url}" alt="Foto von ${esc(e.name)}">` : silhouette()}
+        <span class="ecke eck-ol" aria-hidden="true"></span>
+        <span class="ecke eck-or" aria-hidden="true"></span>
+        <span class="ecke eck-ul" aria-hidden="true"></span>
+        <span class="ecke eck-ur" aria-hidden="true"></span>
+      </div>
       <span class="bezel-led" aria-hidden="true"></span>
       <span class="bezel-vents" aria-hidden="true"></span>
     </div>
-    <div class="detail-kopfzeile">
-      <h2>${esc(e.name)}</h2>
-      <span class="nr-badge">${fmtNr(e.id)}</span>
+    <div class="ortsschild">
+      <div class="os-name">${esc(e.name)}</div>
+      <div class="os-unter">${unterzeile}</div>
+      ${skylineSVG()}
     </div>
-    ${e.typ ? `<span class="typ-badge" style="background:${typFarbe(e.typ)}">${esc(e.typ)}</span>` : ''}
+    <div class="dex-stimme">
+      <span class="dex-symbol" aria-hidden="true"></span>
+      <p>${esc(dexSpruch(e))}<span class="cursor">▌</span></p>
+    </div>
     ${hatDaten ? `<div class="panel"><dl class="daten">
       ${e.fundort   ? datenZeile('📍 Fundort', e.fundort) : ''}
       ${e.begegnung ? datenZeile('🕰️ Erste Begegnung', e.begegnung) : ''}
@@ -692,8 +890,6 @@ function nachbar(richtung){
 }
 
 /* ---------- 6. Schnellwahl-Tasten (gemerkte Werte) ---------- */
-/* Sammelt alle bereits verwendeten Werte eines Feldes, dedupliziert
-   ohne Groß-/Kleinschreibung, häufigste zuerst. */
 function bekannteWerte(feld){
   const m = new Map();
   for(const e of eintraege){
@@ -710,20 +906,27 @@ function bekannteWerte(feld){
     .map(v => v.wert);
 }
 
+/* Gelernte Werte zuerst, danach mit Vorschlägen auffüllen (max. 12). */
+function mitVorschlaegen(werte, vorschlaege){
+  const liste = [...werte];
+  for(const v of vorschlaege){
+    if(liste.length >= 12) break;
+    if(!liste.some(w => w.toLowerCase() === v.toLowerCase())) liste.push(v);
+  }
+  return liste;
+}
+
 function tastenFuellen(containerId, werte){
   $(containerId).innerHTML = werte
     .map(w => `<button type="button" class="taste" data-wert="${esc(w)}">${esc(w)}</button>`)
     .join('');
 }
-
 function tastenAktivieren(containerId, feldId){
   const wert = $(feldId).value.trim();
   for(const knopf of $(containerId).querySelectorAll('.taste')){
     knopf.classList.toggle('aktiv', knopf.dataset.wert === wert);
   }
 }
-
-/* Antippen wählt den Wert („anhaken"), erneutes Antippen wählt ihn ab. */
 function tastenVerbinden(containerId, feldId){
   $(containerId).addEventListener('click', ereignis => {
     const knopf = ereignis.target.closest('.taste');
@@ -734,17 +937,10 @@ function tastenVerbinden(containerId, feldId){
   });
   $(feldId).addEventListener('input', () => tastenAktivieren(containerId, feldId));
 }
-
 function schnellwahlAufbauen(){
-  let typWerte = bekannteWerte('typ');
-  // Solange kaum Daten da sind: ein paar Standard-Typen anbieten
-  for(const v of TYP_VORSCHLAEGE){
-    if(typWerte.length >= 12) break;
-    if(!typWerte.some(w => w.toLowerCase() === v.toLowerCase())) typWerte.push(v);
-  }
-  tastenFuellen('tasten-typ', typWerte);
-  tastenFuellen('tasten-fundort', bekannteWerte('fundort'));
-  tastenFuellen('tasten-begegnung', bekannteWerte('begegnung'));
+  tastenFuellen('tasten-typ',       mitVorschlaegen(bekannteWerte('typ'), TYP_VORSCHLAEGE));
+  tastenFuellen('tasten-fundort',   mitVorschlaegen(bekannteWerte('fundort'), ORTSTEILE));
+  tastenFuellen('tasten-begegnung', mitVorschlaegen(bekannteWerte('begegnung'), BEGEGNUNG_VORSCHLAEGE));
   tastenAktivieren('tasten-typ', 'feld-typ');
   tastenAktivieren('tasten-fundort', 'feld-fundort');
   tastenAktivieren('tasten-begegnung', 'feld-begegnung');
@@ -755,10 +951,10 @@ function zeigeFormFoto(){
   if(formVorschauURL){ URL.revokeObjectURL(formVorschauURL); formVorschauURL = null; }
   if(formFoto){
     formVorschauURL = URL.createObjectURL(formFoto);
-    $('foto-vorschau').innerHTML = `<img src="${formVorschauURL}" alt="Foto-Vorschau">`;
+    $('foto-vorschau-bild').innerHTML = `<img src="${formVorschauURL}" alt="Foto-Vorschau">`;
     $('btn-foto-entfernen').hidden = false;
   } else {
-    $('foto-vorschau').innerHTML = silhouette();
+    $('foto-vorschau-bild').innerHTML = silhouette();
     $('btn-foto-entfernen').hidden = true;
   }
 }
@@ -785,6 +981,13 @@ function formularOeffnen(id){
   if(!e) $('feld-name').focus();
 }
 
+function fotoBlitz(){
+  const b = $('foto-blitz');
+  b.classList.remove('an');
+  void b.offsetWidth; // Reflow erzwingen, damit die Animation bei mehrfacher Aufnahme neu startet
+  b.classList.add('an');
+}
+
 async function dateiGewaehlt(ereignis){
   const datei = ereignis.target.files[0];
   ereignis.target.value = '';
@@ -793,6 +996,7 @@ async function dateiGewaehlt(ereignis){
     formFoto = await fotoVerkleinern(datei);
     formFotoGeaendert = true;
     zeigeFormFoto();
+    fotoBlitz();
   } catch {
     alert('Das Bild konnte nicht verarbeitet werden. Bitte ein anderes Format probieren (JPG/PNG).');
   }
@@ -855,22 +1059,20 @@ async function loeschen(id){
 }
 
 /* ---------- 8. Verbindungsnetz (Mindmap) ----------
-   Personen werden nicht direkt miteinander verbunden, sondern über
-   gemeinsame Merkmal-Knoten („Hubs", z. B. „Grundschule"). Das hält den
-   Graphen lesbar: 6 Personen an einem Ort ergeben 6 Linien zu einem Hub
-   statt 15 Linien untereinander. Verglichen wird der exakte Wert
-   (ohne Groß-/Kleinschreibung) aus Typ, Fundort und Erster Begegnung –
-   die Schnellwahl-Tasten sorgen dafür, dass Werte einheitlich bleiben. */
+   Personen hängen an gemeinsamen Merkmal-Knoten („Hubs", z. B.
+   „Grundschule" oder „Lank-Latum") statt direkt aneinander – das hält
+   den Graphen lesbar. Verglichen wird der exakte Wert (ohne Groß-/
+   Kleinschreibung) aus Typ, Fundort und Erster Begegnung. */
 
 const KATEGORIEN = [['typ', 'Typ'], ['fundort', 'Fundort'], ['begegnung', 'Begegnung']];
-let netz = null; // { knoten, kanten, breite, hoehe, index }
-let netzVB = null; // aktueller viewBox-Ausschnitt { x, y, b, h }
+let netz = null;
+let netzVB = null;
 let netzAktiverHub = null;
 
 function graphBauen(){
   const knoten = [];
   const kanten = [];
-  const hubs = new Map();   // "feld|wert" -> Hub-Knoten
+  const hubs = new Map();
   const zaehlung = new Map();
 
   for(const e of eintraege){
@@ -889,7 +1091,7 @@ function graphBauen(){
       const wert = (e[feld] || '').trim();
       if(!wert) continue;
       const schluessel = feld + '|' + wert.toLowerCase();
-      if(zaehlung.get(schluessel) < 2) continue; // Hubs erst ab 2 Personen
+      if(zaehlung.get(schluessel) < 2) continue;
       let hub = hubs.get(schluessel);
       if(!hub){
         hub = { id:'h' + hubs.size, art:'hub', feld, label:wert, schluessel };
@@ -902,8 +1104,6 @@ function graphBauen(){
   return { knoten, kanten };
 }
 
-/* Einfaches Kräfte-Layout: Abstoßung zwischen allen Knoten,
-   Federkraft entlang der Kanten, dann in die Fläche einpassen. */
 function kraftLayout(knoten, kanten, breite, hoehe, runden){
   const index = new Map(knoten.map(n => [n.id, n]));
   for(const n of knoten){
@@ -945,7 +1145,6 @@ function kraftLayout(knoten, kanten, breite, hoehe, runden){
 function netzViewBoxSetzen(){
   $('netz-svg').setAttribute('viewBox', `${netzVB.x} ${netzVB.y} ${netzVB.b} ${netzVB.h}`);
 }
-
 function kurzName(name){
   return name.length > 13 ? name.slice(0, 12) + '…' : name;
 }
@@ -975,7 +1174,6 @@ function netzAufbauen(){
   netz = { knoten, kanten, breite, hoehe, index };
   netzVB = { x:0, y:0, b:breite, h:hoehe };
 
-  // --- SVG zusammenbauen: erst Kanten (unten), dann Knoten ---
   let defs = '<defs>';
   for(const n of knoten){
     if(n.art === 'person' && n.eintrag.foto){
@@ -1013,7 +1211,6 @@ function netzAufbauen(){
   netzViewBoxSetzen();
 }
 
-/* Position eines Knotens (nach Ziehen) auf Gruppe + angebundene Linien übertragen */
 function netzKnotenAktualisieren(knotenId){
   const n = netz.index.get(knotenId);
   const g = $('netz-svg').querySelector(`g[data-nid="${knotenId}"]`);
@@ -1028,7 +1225,6 @@ function netzKnotenAktualisieren(knotenId){
   });
 }
 
-/* Hub antippen: verbundene Personen hervorheben, Rest abdunkeln. */
 function hubUmschalten(hubGruppe){
   const svg = $('netz-svg');
   const nid = hubGruppe.dataset.nid;
@@ -1074,7 +1270,6 @@ function svgPunkt(ereignis){
   };
 }
 
-/* Ziehen: Knoten verschieben oder (auf freier Fläche) den Ausschnitt schwenken */
 function netzZeigerVerbinden(){
   const svg = $('netz-svg');
   let zug = null;
@@ -1111,7 +1306,6 @@ function netzZeigerVerbinden(){
 
   svg.addEventListener('pointerup', ereignis => {
     if(zug && zug.art === 'knoten' && !zug.bewegt){
-      // Tippen ohne Ziehen = Auswahl
       if(zug.gruppe.dataset.person) renderDetail(Number(zug.gruppe.dataset.person));
       else hubUmschalten(zug.gruppe);
     }
@@ -1138,7 +1332,7 @@ async function exportieren(){
       });
     }
     const json = JSON.stringify({
-      app: 'gesichterdex', version: 2,
+      app: 'meerbuschdex', version: 4,
       exportiertAm: new Date().toISOString(),
       eintraege: raus,
     }, null, 2);
@@ -1146,7 +1340,7 @@ async function exportieren(){
     const blob = new Blob([json], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `gesichterdex-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `meerbuschdex-backup-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1157,6 +1351,7 @@ async function exportieren(){
   }
 }
 
+/* Import akzeptiert auch alte GesichterDex-Backups (gleiches Format). */
 async function importieren(datei){
   let daten;
   try{
@@ -1203,7 +1398,7 @@ async function importieren(datei){
 function statistikAktualisieren(){
   const bytes = eintraege.reduce((s, e) => s + (e.foto ? e.foto.size : 0), 0);
   $('statistik').textContent =
-    `EINTRÄGE: ${String(eintraege.length).padStart(3, '0')} · FOTOS: ${(bytes / 1048576).toFixed(1)} MB · NUR LOKAL`;
+    `MEERBUSCHER: ${String(eintraege.length).padStart(3, '0')} · FOTOS: ${(bytes / 1048576).toFixed(1)} MB · NUR LOKAL`;
 }
 function modalOeffnen(){ statistikAktualisieren(); $('modal-hintergrund').hidden = false; }
 function modalSchliessen(){ $('modal-hintergrund').hidden = true; }
@@ -1309,6 +1504,9 @@ async function start(){
       '(z. B. in manchen privaten Fenstern). Die App benötigt IndexedDB zum Speichern.<br><br>' + esc(fehler) + '</p>';
     return;
   }
+  // Meerbusch-Deko einsetzen (Stern im Titel, Skyline unter der Liste)
+  $('stern-slot').innerHTML = sternSVG();
+  $('skyline-fuss').innerHTML = skylineSVG();
   try{ $('sortierung').value = localStorage.getItem('gdex_sort') || 'id'; } catch {}
   ereignisseVerbinden();
   renderListe();
